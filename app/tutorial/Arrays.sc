@@ -37,3 +37,7 @@ for (i <- 0 to 8) {
   }
   println();
 }
+
+"Map test"
+board flatMap(elem => elem)
+"End"
