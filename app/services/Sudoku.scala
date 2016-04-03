@@ -20,7 +20,8 @@ case class RelativeElements(val row: List[BoardElement], val col: List[BoardElem
 object Sudoku {
 
   def main(args: Array[String]) {
-    val b = new Board("FGE34IABH2DHA7FC5IAI38EB764G1F4HC592EBDIAGHCF839FB5D7A987EF12DCD6BG3HIA5CEAB94FHG")
+    val result = new Board("675349128248176359193852764716483592524917836839625471987561243462738915351294687")
+    val b = new Board("FGE34IABH2DHA7FC5IAI38EB764G1F4HC592EBDIAGHCF839FB5D7A987EF12DCD6BG3HIA5CEAB94FHG", result)
     print("Start: \n" + b + "\n")
     b.start()
     println("End: \n" + b)
@@ -29,15 +30,21 @@ object Sudoku {
   }
 }
 //Refactor this class - too many public variables - used in test but need to be fixed
-class Board {
+class Board(result: Option[Board]) {
   var matrix: Array[Array[BoardElement]] = Array.ofDim[BoardElement](9, 9)
 
-  def this(str: String) = {
-    this()
+  //TODO - I don't like it
+  def this(str: String, result: Board) {
+    this(Option(result))
     str.zipWithIndex
       .foreach {
         case (c, i) => matrix(i / 9)(i % 9) = if (c.isDigit) Resolved(i / 9, i % 9, c - 48) else NotResolved(i / 9, i % 9, ListBuffer.range(1, 10))
       }
+  }
+
+  def this(str: String) = {
+    //TODO why Nil doesn't work here?
+    this(str, null)
   }
 
   def start() = {
@@ -50,9 +57,8 @@ class Board {
       case nR : NotResolved => {
         nR.value -= x.value
         if(nR.value.length == 1) {
-          val resolved: Resolved = Resolved(nR.row, nR.column, nR.value.head)
-          matrix(nR.row)(nR.column) = resolved
-          Some(resolved)
+          //TODO: I don't like this
+          Some(toResolved((nR.value.head -> List(nR))))
         } else {
           None
         }
@@ -89,6 +95,10 @@ class Board {
       f match {
         case (k, v) => {
           val resolved: Resolved = new Resolved(v.head, k)
+          result.foreach(r => {
+            val shouldBe = r.matrix(resolved.row)(resolved.column)
+            if(shouldBe != resolved) throw new RuntimeException(s"suggested element value: $resolved doesn't match result: $shouldBe")
+          })
           matrix(resolved.row)(resolved.column) = resolved
           resolved
         }

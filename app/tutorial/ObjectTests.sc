@@ -26,3 +26,6 @@ nR
 class Test() {
 
 }
+
+
+s"This is: $nR"
